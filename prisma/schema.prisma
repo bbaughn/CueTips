@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  collection       UserCollection[]
+  trackPreferences UserTrackPreference[]
+  sectionOverrides UserSectionOverride[]
+  tags             Tag[]
+  releaseTags      ReleaseTag[]
+  trackTags        TrackTag[]
+
+  @@map("users")
+}
+
+model Release {
+  id          String   @id @default(cuid())
+  discogsId   Int      @unique @map("discogs_id")
+  title       String
+  artist      String
+  year        Int?
+  coverArtUrl String?  @map("cover_art_url")
+  label       String?
+  catNo       String?  @map("cat_no")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tracks     Track[]
+  collectors UserCollection[]
+  tags       ReleaseTag[]
+
+  @@map("releases")
+}
+
+model Track {
+  id              String  @id @default(cuid())
+  releaseId       String  @map("release_id")
+  title           String
+  artist          String?
+  position        String?
+  duration        String?
+  barsPercussion  Int?    @map("bars_percussion")
+
+  release          Release               @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  sections         Section[]
+  userPreferences  UserTrackPreference[]
+  tags             TrackTag[]
+
+  @@map("tracks")
+}
+
+model Section {
+  id      String  @id @default(cuid())
+  trackId String  @map("track_id")
+  name    String?
+  bpm     Float?
+  key     String?
+  ordinal Int     @default(0)
+
+  track          Track                 @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  userOverrides  UserSectionOverride[]
+
+  @@map("sections")
+}
+
+// Join table: which users have which releases
+model UserCollection {
+  userId    String   @map("user_id")
+  releaseId String   @map("release_id")
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, releaseId])
+  @@map("user_collections")
+}
+
+// Per-user overrides on track-level fields
+model UserTrackPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @map("user_id")
+  trackId               String   @map("track_id")
+  unwanted              Boolean  @default(false)
+  barsPercussionOverride Int?    @map("bars_percussion_override")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@map("user_track_preferences")
+}
+
+// Per-user overrides on section BPM/Key
+model UserSectionOverride {
+  id        String @id @default(cuid())
+  userId    String @map("user_id")
+  sectionId String @map("section_id")
+  bpm       Float?
+  key       String?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sectionId])
+  @@map("user_section_overrides")
+}
+
+// User-created tags
+model Tag {
+  id        String @id @default(cuid())
+  name      String
+  createdBy String @map("created_by")
+
+  creator     User         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  releaseTags ReleaseTag[]
+  trackTags   TrackTag[]
+
+  @@unique([name, createdBy])
+  @@map("tags")
+}
+
+model ReleaseTag {
+  tagId     String @map("tag_id")
+  releaseId String @map("release_id")
+  userId    String @map("user_id")
+
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([tagId, releaseId, userId])
+  @@map("release_tags")
+}
+
+model TrackTag {
+  tagId   String @map("tag_id")
+  trackId String @map("track_id")
+  userId  String @map("user_id")
+
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([tagId, trackId, userId])
+  @@map("track_tags")
+}
