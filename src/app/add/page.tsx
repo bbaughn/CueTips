@@ -10,6 +10,8 @@ interface SearchResult {
   year: string;
   thumb: string;
   type: string;
+  inDb: boolean;
+  inCollection: boolean;
 }
 
 export default function AddReleasePage() {
@@ -18,6 +20,8 @@ export default function AddReleasePage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<number | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState<number | null>(null);
+  const [restoring, setRestoring] = useState<number | null>(null);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +48,19 @@ export default function AddReleasePage() {
       router.push("/");
     }
     setAdding(null);
+  }
+
+  async function handleRestore(discogsId: number) {
+    setRestoring(discogsId);
+    const res = await fetch("/api/collection/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discogsId }),
+    });
+    if (res.ok) {
+      setConfirmRestore(null);
+    }
+    setRestoring(null);
   }
 
   return (
@@ -80,7 +97,11 @@ export default function AddReleasePage() {
           {results.map((r) => (
             <div
               key={r.id}
-              className="flex items-center gap-4 p-4 bg-zinc-900 rounded-lg border border-zinc-800"
+              className={`flex items-center gap-4 p-4 rounded-lg border ${
+                r.inDb
+                  ? "bg-zinc-900/80 border-amber-700/50"
+                  : "bg-zinc-900 border-zinc-800"
+              }`}
             >
               {r.thumb ? (
                 <Image
@@ -88,7 +109,7 @@ export default function AddReleasePage() {
                   alt=""
                   width={60}
                   height={60}
-                  className="rounded object-cover"
+                  className="rounded object-cover w-[60px] h-[60px]"
                   unoptimized
                 />
               ) : (
@@ -97,16 +118,57 @@ export default function AddReleasePage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{r.title}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium truncate">{r.title}</p>
+                  {r.inDb && (
+                    <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-300 border border-amber-700/50">
+                      In CueTips
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-zinc-400">{r.year || "—"}</p>
               </div>
-              <button
-                onClick={() => handleAdd(r.id)}
-                disabled={adding === r.id}
-                className="px-4 py-2 bg-zinc-700 hover:bg-amber-600 rounded-lg text-sm font-medium transition disabled:opacity-50"
-              >
-                {adding === r.id ? "Adding..." : "+ Add"}
-              </button>
+              {r.inCollection ? (
+                confirmRestore === r.id ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-400">
+                      Wipe your customizations?
+                    </span>
+                    <button
+                      onClick={() => handleRestore(r.id)}
+                      disabled={restoring === r.id}
+                      className="px-3 py-1.5 bg-red-700 hover:bg-red-600 rounded-lg text-xs font-medium transition disabled:opacity-50"
+                    >
+                      {restoring === r.id ? "..." : "Yes, Restore"}
+                    </button>
+                    <button
+                      onClick={() => setConfirmRestore(null)}
+                      className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmRestore(r.id)}
+                    className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm font-medium text-zinc-300 transition"
+                  >
+                    Restore Defaults
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={() => handleAdd(r.id)}
+                  disabled={adding === r.id}
+                  className="px-4 py-2 bg-zinc-700 hover:bg-amber-600 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                >
+                  {adding === r.id
+                    ? "Adding..."
+                    : r.inDb
+                      ? "+ Add"
+                      : "+ Import"}
+                </button>
+              )}
             </div>
           ))}
         </div>
