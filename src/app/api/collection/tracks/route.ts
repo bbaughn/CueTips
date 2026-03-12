@@ -16,6 +16,11 @@ export async function GET() {
         include: {
           tracks: {
             orderBy: { position: "asc" },
+            include: {
+              sections: {
+                orderBy: { ordinal: "asc" },
+              },
+            },
           },
         },
       },
@@ -23,16 +28,28 @@ export async function GET() {
   });
 
   const tracks = collection.flatMap((c) =>
-    c.release.tracks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      artist: t.artist || c.release.artist,
-      position: t.position,
-      duration: t.duration,
-      releaseId: c.release.id,
-      releaseTitle: c.release.title,
-      label: c.release.label,
-    }))
+    c.release.tracks.map((t) => {
+      const firstSection = t.sections[0] ?? null;
+      const lastSection =
+        t.sections.length > 1 ? t.sections[t.sections.length - 1] : null;
+
+      return {
+        id: t.id,
+        title: t.title,
+        artist: t.artist || c.release.artist,
+        position: t.position,
+        duration: t.duration,
+        releaseId: c.release.id,
+        releaseTitle: c.release.title,
+        label: c.release.label,
+        coverArtUrl: c.release.coverArtUrl,
+        analysisStatus: t.analysisStatus,
+        bpm: firstSection?.bpm ?? null,
+        key: firstSection?.key ?? null,
+        endBpm: lastSection?.bpm ?? null,
+        endKey: lastSection?.key ?? null,
+      };
+    })
   );
 
   tracks.sort((a, b) => a.artist.localeCompare(b.artist));

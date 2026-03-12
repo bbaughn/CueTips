@@ -50,6 +50,10 @@ model Track {
   position        String?
   duration        String?
   barsPercussion  Int?    @map("bars_percussion")
+  swing           Boolean? @map("swing")
+  youtubeUrl      String?  @map("youtube_url")
+  analysisJobId   String?  @map("analysis_job_id")
+  analysisStatus  String?  @map("analysis_status")
 
   release          Release               @relation(fields: [releaseId], references: [id], onDelete: Cascade)
   sections         Section[]

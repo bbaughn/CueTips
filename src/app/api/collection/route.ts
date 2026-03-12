@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getDiscogsRelease } from "@/lib/discogs";
+import { findYoutubeUrl } from "@/lib/youtube";
+import { submitAnalysis } from "@/lib/qanalyzer";
 
 // GET /api/collection - list user's releases alphabetically
 export async function GET() {
@@ -46,9 +48,13 @@ export async function POST(req: Request) {
   // Check if release already exists in our DB
   let release = await prisma.release.findUnique({
     where: { discogsId },
+    include: { tracks: true },
   });
 
+  let isNewImport = false;
+
   if (!release) {
+    isNewImport = true;
     // Fetch from Discogs and create
     const discogs = await getDiscogsRelease(discogsId);
     const artistName = discogs.artists?.map((a) => a.name).join(", ") || "Unknown";
@@ -79,6 +85,7 @@ export async function POST(req: Request) {
             })),
         },
       },
+      include: { tracks: true },
     });
   }
 
@@ -96,6 +103,50 @@ export async function POST(req: Request) {
     },
     update: {},
   });
+
+  // For new imports, kick off YouTube search + QAnalyzer in the background
+  if (isNewImport) {
+    const releaseArtist = release.artist;
+    const tracks = release.tracks;
+
+    // Fire and forget — don't block the response
+    (async () => {
+      for (const track of tracks) {
+        try {
+          const artist = track.artist || releaseArtist;
+          const ytUrl = await findYoutubeUrl(artist, track.title);
+          if (!ytUrl) {
+            await prisma.track.update({
+              where: { id: track.id },
+              data: { analysisStatus: "no_youtube" },
+            });
+            continue;
+          }
+
+          await prisma.track.update({
+            where: { id: track.id },
+            data: { youtubeUrl: ytUrl },
+          });
+
+          // Submit to QAnalyzer
+          const job = await submitAnalysis(ytUrl);
+          await prisma.track.update({
+            where: { id: track.id },
+            data: {
+              analysisJobId: job.job_id,
+              analysisStatus: "queued",
+            },
+          });
+        } catch (err) {
+          console.error(`YouTube/analysis failed for track ${track.id}:`, err);
+          await prisma.track.update({
+            where: { id: track.id },
+            data: { analysisStatus: "error" },
+          }).catch(() => {});
+        }
+      }
+    })();
+  }
 
   return NextResponse.json({ success: true, releaseId: release.id });
 }
