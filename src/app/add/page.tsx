@@ -45,7 +45,8 @@ export default function AddReleasePage() {
       body: JSON.stringify({ discogsId }),
     });
     if (res.ok) {
-      router.push("/");
+      const data = await res.json();
+      router.push(`/release/${data.releaseId}`);
     }
     setAdding(null);
   }
@@ -58,7 +59,8 @@ export default function AddReleasePage() {
       body: JSON.stringify({ discogsId }),
     });
     if (res.ok) {
-      setConfirmRestore(null);
+      const data = await res.json();
+      router.push(`/release/${data.releaseId}`);
     }
     setRestoring(null);
   }

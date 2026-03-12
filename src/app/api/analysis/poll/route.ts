@@ -62,6 +62,7 @@ export async function POST() {
             name: `Section ${i + 1}`,
             bpm: s.tempo_bpm_rounded ?? s.tempo_bpm,
             key: s.key && s.mode ? `${s.key} ${s.mode}` : s.key,
+            tuning: s.tuning_cents ?? null,
             ordinal: i,
           })),
         });

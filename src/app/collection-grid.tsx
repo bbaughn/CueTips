@@ -200,9 +200,7 @@ export default function CollectionGrid({ userName }: { userName: string }) {
               <div
                 key={r.id}
                 className="group cursor-pointer"
-                onClick={() => {
-                  /* future: navigate to release detail */
-                }}
+                onClick={() => router.push(`/release/${r.id}`)}
               >
                 <div className="aspect-square bg-zinc-900 rounded-lg overflow-hidden mb-2">
                   {r.coverArtUrl ? (
@@ -260,7 +258,8 @@ export default function CollectionGrid({ userName }: { userName: string }) {
                   return (
                     <tr
                       key={t.id}
-                      className="border-b border-zinc-800/50 hover:bg-zinc-900/50 transition"
+                      className="border-b border-zinc-800/50 hover:bg-zinc-900/50 transition cursor-pointer"
+                      onClick={() => router.push(`/track/${t.id}`)}
                     >
                       <td className="py-2 px-2 w-10">
                         {t.coverArtUrl ? (

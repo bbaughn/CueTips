@@ -69,6 +69,7 @@ model Section {
   name    String?
   bpm     Float?
   key     String?
+  tuning  Int?
   ordinal Int     @default(0)
 
   track          Track                 @relation(fields: [trackId], references: [id], onDelete: Cascade)
@@ -97,6 +98,7 @@ model UserTrackPreference {
   trackId               String   @map("track_id")
   unwanted              Boolean  @default(false)
   barsPercussionOverride Int?    @map("bars_percussion_override")
+  swingOverride         Boolean? @map("swing_override")
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
@@ -105,13 +107,14 @@ model UserTrackPreference {
   @@map("user_track_preferences")
 }
 
-// Per-user overrides on section BPM/Key
+// Per-user overrides on section BPM/Key/Tuning
 model UserSectionOverride {
   id        String @id @default(cuid())
   userId    String @map("user_id")
   sectionId String @map("section_id")
   bpm       Float?
   key       String?
+  tuning    Int?
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
