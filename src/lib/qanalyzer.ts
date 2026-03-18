@@ -20,7 +20,8 @@ export interface AnalysisSection {
   key: string | null;
   mode: string | null;
   confidence: number;
-  tuning_cents: number | null;
+  tuning: number | null;
+  tuning_rounded: number | null;
 }
 
 export interface AnalysisResult {

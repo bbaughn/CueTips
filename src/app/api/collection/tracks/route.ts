@@ -46,8 +46,12 @@ export async function GET() {
         analysisStatus: t.analysisStatus,
         bpm: firstSection?.bpm ?? null,
         key: firstSection?.key ?? null,
+        hour: firstSection?.hour ?? null,
+        minute: firstSection?.minute ?? null,
         endBpm: lastSection?.bpm ?? null,
         endKey: lastSection?.key ?? null,
+        endHour: lastSection?.hour ?? null,
+        endMinute: lastSection?.minute ?? null,
       };
     })
   );

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getJobStatus, getJobResult } from "@/lib/qanalyzer";
+import { calcHourMinuteFromKeyString } from "@/lib/hour-minute";
 
 // POST /api/analysis/poll - check pending analysis jobs and save results
 // Returns summary of what was updated
@@ -44,7 +45,29 @@ export async function POST() {
         const g = result.result.global;
         const sections = result.result.sections;
 
-        // Update track with global stats
+        // Delete existing sections and create new ones from analysis
+        await prisma.section.deleteMany({ where: { trackId: track.id } });
+        await prisma.section.createMany({
+          data: sections.map((s, i) => {
+            const bpm = s.tempo_bpm_rounded ?? s.tempo_bpm;
+            const key = s.key && s.mode ? `${s.key} ${s.mode}` : s.key;
+            const rawTuning = s.tuning ?? null;
+            const tuning = rawTuning != null ? Math.round(rawTuning / 25) * 25 : null;
+            const hm = calcHourMinuteFromKeyString(bpm, key, tuning);
+            return {
+              trackId: track.id,
+              name: `Section ${i + 1}`,
+              bpm,
+              key,
+              tuning,
+              hour: hm?.hour ?? null,
+              minute: hm?.minute ?? null,
+              ordinal: i,
+            };
+          }),
+        });
+
+        // Update track with global stats only after sections are saved
         await prisma.track.update({
           where: { id: track.id },
           data: {
@@ -52,19 +75,6 @@ export async function POST() {
             swing: g.swing,
             analysisStatus: "succeeded",
           },
-        });
-
-        // Delete existing sections and create new ones from analysis
-        await prisma.section.deleteMany({ where: { trackId: track.id } });
-        await prisma.section.createMany({
-          data: sections.map((s, i) => ({
-            trackId: track.id,
-            name: `Section ${i + 1}`,
-            bpm: s.tempo_bpm_rounded ?? s.tempo_bpm,
-            key: s.key && s.mode ? `${s.key} ${s.mode}` : s.key,
-            tuning: s.tuning_cents ?? null,
-            ordinal: i,
-          })),
         });
 
         completed++;
@@ -86,6 +96,10 @@ export async function POST() {
       }
     } catch (err) {
       console.error(`Poll failed for track ${track.id}:`, err);
+      await prisma.track.update({
+        where: { id: track.id },
+        data: { analysisStatus: "error" },
+      }).catch(() => {});
       failed++;
     }
   }

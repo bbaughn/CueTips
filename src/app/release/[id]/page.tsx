@@ -14,8 +14,13 @@ interface Track {
   analysisStatus: string | null;
   bpm: number | null;
   key: string | null;
+  hour: number | null;
+  minute: number | null;
+  tuning: number | null;
   endBpm: number | null;
   endKey: string | null;
+  endHour: number | null;
+  endMinute: number | null;
 }
 
 interface ReleaseDetail {
@@ -134,101 +139,173 @@ export default function ReleasePage() {
             Analyzing tracks... refreshing automatically
           </p>
         )}
-        <table className="w-full text-sm text-left">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-400">
-              <th className="py-3 px-4 font-medium w-12">#</th>
-              <th className="py-3 px-4 font-medium">Artist</th>
-              <th className="py-3 px-4 font-medium">Title</th>
-              <th className="py-3 px-4 font-medium">BPM</th>
-              <th className="py-3 px-4 font-medium">Key</th>
-              <th className="py-3 px-4 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {release.tracks.map((t) => {
-              const pending =
-                t.analysisStatus === "queued" ||
-                t.analysisStatus === "running";
-              const embedUrl = t.youtubeUrl
-                ? youtubeEmbedUrl(t.youtubeUrl)
-                : null;
-
-              return (
-                <tr
-                  key={t.id}
-                  className="border-b border-zinc-800/50 align-top cursor-pointer hover:bg-zinc-900/50 transition"
-                  onClick={() => router.push(`/track/${t.id}`)}
-                >
-                  <td className="py-4 px-4 text-zinc-500">
-                    {t.position || "—"}
-                  </td>
-                  <td className="py-4 px-4">{t.artist}</td>
-                  <td className="py-4 px-4">{t.title}</td>
-                  <td className="py-4 px-4">
-                    {pending ? (
-                      <span className="text-zinc-500 animate-pulse">...</span>
-                    ) : t.bpm ? (
-                      <span>
-                        {t.bpm}
-                        {t.endBpm && t.endBpm !== t.bpm && (
-                          <span className="text-zinc-500">
-                            {" "}
-                            &rarr; {t.endBpm}
-                          </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="text-zinc-600">—</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-4">
-                    {pending ? (
-                      <span className="text-zinc-500 animate-pulse">...</span>
-                    ) : t.key ? (
-                      <span>
-                        {t.key}
-                        {t.endKey && t.endKey !== t.key && (
-                          <span className="text-zinc-500">
-                            {" "}
-                            &rarr; {t.endKey}
-                          </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="text-zinc-600">—</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-4">
-                    {embedUrl ? (
-                      <iframe
-                        src={embedUrl}
-                        width={280}
-                        height={158}
-                        className="rounded"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    ) : t.youtubeUrl ? (
-                      <a
-                        href={t.youtubeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-amber-500 hover:underline text-xs"
-                      >
-                        Open on YouTube
-                      </a>
-                    ) : (
-                      <span className="text-zinc-600 text-xs">
-                        No video found
-                      </span>
-                    )}
-                  </td>
+        {(() => {
+          const tracks = release.tracks;
+          const hasEndBpm = tracks.some((t) => t.endBpm != null);
+          const hasEndKey = tracks.some((t) => t.endKey != null);
+          const hasEndCueTips = tracks.some((t) => t.endHour != null);
+          return (
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="border-b border-zinc-800 text-zinc-400">
+                  <th className="py-3 px-4 font-medium w-12">#</th>
+                  <th className="py-3 px-4 font-medium">Artist</th>
+                  <th className="py-3 px-4 font-medium">Title</th>
+                  <th className="py-3 px-4 font-medium">BPM</th>
+                  {hasEndBpm && <th className="py-3 px-4 font-medium">BPM (End)</th>}
+                  <th className="py-3 px-4 font-medium">Key</th>
+                  {hasEndKey && <th className="py-3 px-4 font-medium">Key (End)</th>}
+                  <th className="py-3 px-4 font-medium">CueTips</th>
+                  {hasEndCueTips && <th className="py-3 px-4 font-medium">CueTips (End)</th>}
+                  <th className="py-3 px-4 font-medium">Tuning</th>
+                  <th className="py-3 px-4 font-medium"></th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {tracks.map((t) => {
+                  const pending =
+                    t.analysisStatus === "queued" ||
+                    t.analysisStatus === "running";
+                  const analysisFailed =
+                    t.analysisStatus === "failed" ||
+                    t.analysisStatus === "error";
+                  const embedUrl = t.youtubeUrl
+                    ? youtubeEmbedUrl(t.youtubeUrl)
+                    : null;
+
+                  return (
+                    <tr
+                      key={t.id}
+                      className="border-b border-zinc-800/50 align-top cursor-pointer hover:bg-zinc-900/50 transition"
+                      onClick={() => router.push(`/track/${t.id}`)}
+                    >
+                      <td className="py-4 px-4 text-zinc-500">
+                        {t.position || "—"}
+                      </td>
+                      <td className="py-4 px-4">{t.artist}</td>
+                      <td className="py-4 px-4">{t.title}</td>
+                      <td className="py-4 px-4">
+                        {pending ? (
+                          <span className="text-zinc-500 animate-pulse">...</span>
+                        ) : analysisFailed ? (
+                          <span className="text-red-500 text-xs">failed</span>
+                        ) : t.bpm ? (
+                          <span>{t.bpm}</span>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
+                        )}
+                      </td>
+                      {hasEndBpm && (
+                        <td className="py-4 px-4">
+                          {pending ? (
+                            <span className="text-zinc-500 animate-pulse">...</span>
+                          ) : analysisFailed ? (
+                            <span className="text-red-500 text-xs">failed</span>
+                          ) : t.endBpm != null ? (
+                            <span>{t.endBpm}</span>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+                      )}
+                      <td className="py-4 px-4">
+                        {pending ? (
+                          <span className="text-zinc-500 animate-pulse">...</span>
+                        ) : analysisFailed ? (
+                          <span className="text-red-500 text-xs">failed</span>
+                        ) : t.key ? (
+                          <span>{t.key}</span>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
+                        )}
+                      </td>
+                      {hasEndKey && (
+                        <td className="py-4 px-4">
+                          {pending ? (
+                            <span className="text-zinc-500 animate-pulse">...</span>
+                          ) : analysisFailed ? (
+                            <span className="text-red-500 text-xs">failed</span>
+                          ) : t.endKey != null ? (
+                            <span>{t.endKey}</span>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+                      )}
+                      <td className="py-4 px-4">
+                        {pending ? (
+                          <span className="text-zinc-500 animate-pulse">...</span>
+                        ) : analysisFailed ? (
+                          <span className="text-red-500 text-xs">failed</span>
+                        ) : t.hour != null ? (
+                          <span>
+                            {t.hour}:{String(t.minute ?? 0).padStart(2, "0")}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
+                        )}
+                      </td>
+                      {hasEndCueTips && (
+                        <td className="py-4 px-4">
+                          {pending ? (
+                            <span className="text-zinc-500 animate-pulse">...</span>
+                          ) : analysisFailed ? (
+                            <span className="text-red-500 text-xs">failed</span>
+                          ) : t.endHour != null ? (
+                            <span>
+                              {t.endHour}:{String(t.endMinute ?? 0).padStart(2, "0")}
+                            </span>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+                      )}
+                      <td className="py-4 px-4">
+                        {pending ? (
+                          <span className="text-zinc-500 animate-pulse">...</span>
+                        ) : analysisFailed ? (
+                          <span className="text-red-500 text-xs">failed</span>
+                        ) : t.tuning != null ? (
+                          <span>
+                            {t.tuning > 0 ? "+" : ""}
+                            {t.tuning}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {embedUrl ? (
+                          <iframe
+                            src={embedUrl}
+                            width={280}
+                            height={158}
+                            className="rounded"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : t.youtubeUrl ? (
+                          <a
+                            href={t.youtubeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-500 hover:underline text-xs"
+                          >
+                            Open on YouTube
+                          </a>
+                        ) : (
+                          <span className="text-zinc-600 text-xs">
+                            No video found
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
     </div>
   );

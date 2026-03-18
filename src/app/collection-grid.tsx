@@ -26,8 +26,12 @@ interface Track {
   analysisStatus: string | null;
   bpm: number | null;
   key: string | null;
+  hour: number | null;
+  minute: number | null;
   endBpm: number | null;
   endKey: string | null;
+  endHour: number | null;
+  endMinute: number | null;
 }
 
 type Tab = "releases" | "tracks";
@@ -232,93 +236,164 @@ export default function CollectionGrid({ userName }: { userName: string }) {
                 Analyzing tracks... refreshing automatically
               </p>
             )}
-            <table className="w-full text-sm text-left">
-              <thead>
-                <tr className="border-b border-zinc-800 text-zinc-400">
-                  <th className="py-3 px-2 w-10"></th>
-                  {(["artist", "title", "label", "bpm", "key"] as SortField[]).map(
-                    (field) => (
+            {(() => {
+              const hasEndBpm = sortedTracks.some((t) => t.endBpm != null);
+              const hasEndKey = sortedTracks.some((t) => t.endKey != null);
+              const hasEndCueTips = sortedTracks.some((t) => t.endHour != null);
+              return (
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-400">
+                      <th className="py-3 px-2 w-10"></th>
+                      {(["artist", "title", "label", "bpm"] as SortField[]).map(
+                        (field) => {
+                          const labels: Record<SortField, string> = {
+                            artist: "Artist",
+                            title: "Title",
+                            label: "Label",
+                            bpm: "BPM",
+                            key: "Key",
+                          };
+                          return (
+                            <th
+                              key={field}
+                              onClick={() => toggleSort(field)}
+                              className="py-3 px-4 font-medium cursor-pointer hover:text-white transition select-none"
+                            >
+                              {labels[field]}
+                              {sortIndicator(field)}
+                            </th>
+                          );
+                        }
+                      )}
+                      {hasEndBpm && <th className="py-3 px-4 font-medium">BPM (End)</th>}
                       <th
-                        key={field}
-                        onClick={() => toggleSort(field)}
+                        onClick={() => toggleSort("key")}
                         className="py-3 px-4 font-medium cursor-pointer hover:text-white transition select-none"
                       >
-                        {field.charAt(0).toUpperCase() + field.slice(1)}
-                        {sortIndicator(field)}
+                        Key{sortIndicator("key")}
                       </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedTracks.map((t) => {
-                  const pending =
-                    t.analysisStatus === "queued" ||
-                    t.analysisStatus === "running";
-                  return (
-                    <tr
-                      key={t.id}
-                      className="border-b border-zinc-800/50 hover:bg-zinc-900/50 transition cursor-pointer"
-                      onClick={() => router.push(`/track/${t.id}`)}
-                    >
-                      <td className="py-2 px-2 w-10">
-                        {t.coverArtUrl ? (
-                          <Image
-                            src={t.coverArtUrl}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-zinc-800" />
-                        )}
-                      </td>
-                      <td className="py-3 px-4">{t.artist}</td>
-                      <td className="py-3 px-4">{t.title}</td>
-                      <td className="py-3 px-4 text-zinc-400">
-                        {t.label || "—"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {pending ? (
-                          <span className="text-zinc-500 animate-pulse">...</span>
-                        ) : t.bpm ? (
-                          <span>
-                            {t.bpm}
-                            {t.endBpm && t.endBpm !== t.bpm && (
-                              <span className="text-zinc-500">
-                                {" "}
-                                &rarr; {t.endBpm}
-                              </span>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="text-zinc-600">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        {pending ? (
-                          <span className="text-zinc-500 animate-pulse">...</span>
-                        ) : t.key ? (
-                          <span>
-                            {t.key}
-                            {t.endKey && t.endKey !== t.key && (
-                              <span className="text-zinc-500">
-                                {" "}
-                                &rarr; {t.endKey}
-                              </span>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="text-zinc-600">—</span>
-                        )}
-                      </td>
+                      {hasEndKey && <th className="py-3 px-4 font-medium">Key (End)</th>}
+                      <th className="py-3 px-4 font-medium">CueTips</th>
+                      {hasEndCueTips && <th className="py-3 px-4 font-medium">CueTips (End)</th>}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {sortedTracks.map((t) => {
+                      const pending =
+                        t.analysisStatus === "queued" ||
+                        t.analysisStatus === "running";
+                      const analysisFailed =
+                        t.analysisStatus === "failed" ||
+                        t.analysisStatus === "error";
+                      return (
+                        <tr
+                          key={t.id}
+                          className="border-b border-zinc-800/50 hover:bg-zinc-900/50 transition cursor-pointer"
+                          onClick={() => router.push(`/track/${t.id}`)}
+                        >
+                          <td className="py-2 px-2 w-10">
+                            {t.coverArtUrl ? (
+                              <Image
+                                src={t.coverArtUrl}
+                                alt=""
+                                width={32}
+                                height={32}
+                                className="w-8 h-8 rounded object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-zinc-800" />
+                            )}
+                          </td>
+                          <td className="py-3 px-4">{t.artist}</td>
+                          <td className="py-3 px-4">{t.title}</td>
+                          <td className="py-3 px-4 text-zinc-400">
+                            {t.label || "—"}
+                          </td>
+                          <td className="py-3 px-4">
+                            {pending ? (
+                              <span className="text-zinc-500 animate-pulse">...</span>
+                            ) : analysisFailed ? (
+                              <span className="text-red-500 text-xs">failed</span>
+                            ) : t.bpm ? (
+                              <span>{t.bpm}</span>
+                            ) : (
+                              <span className="text-zinc-600">—</span>
+                            )}
+                          </td>
+                          {hasEndBpm && (
+                            <td className="py-3 px-4">
+                              {pending ? (
+                                <span className="text-zinc-500 animate-pulse">...</span>
+                              ) : analysisFailed ? (
+                                <span className="text-red-500 text-xs">failed</span>
+                              ) : t.endBpm != null ? (
+                                <span>{t.endBpm}</span>
+                              ) : (
+                                <span className="text-zinc-600">—</span>
+                              )}
+                            </td>
+                          )}
+                          <td className="py-3 px-4">
+                            {pending ? (
+                              <span className="text-zinc-500 animate-pulse">...</span>
+                            ) : analysisFailed ? (
+                              <span className="text-red-500 text-xs">failed</span>
+                            ) : t.key ? (
+                              <span>{t.key}</span>
+                            ) : (
+                              <span className="text-zinc-600">—</span>
+                            )}
+                          </td>
+                          {hasEndKey && (
+                            <td className="py-3 px-4">
+                              {pending ? (
+                                <span className="text-zinc-500 animate-pulse">...</span>
+                              ) : analysisFailed ? (
+                                <span className="text-red-500 text-xs">failed</span>
+                              ) : t.endKey != null ? (
+                                <span>{t.endKey}</span>
+                              ) : (
+                                <span className="text-zinc-600">—</span>
+                              )}
+                            </td>
+                          )}
+                          <td className="py-3 px-4">
+                            {pending ? (
+                              <span className="text-zinc-500 animate-pulse">...</span>
+                            ) : analysisFailed ? (
+                              <span className="text-red-500 text-xs">failed</span>
+                            ) : t.hour != null ? (
+                              <span>
+                                {t.hour}:{String(t.minute ?? 0).padStart(2, "0")}
+                              </span>
+                            ) : (
+                              <span className="text-zinc-600">—</span>
+                            )}
+                          </td>
+                          {hasEndCueTips && (
+                            <td className="py-3 px-4">
+                              {pending ? (
+                                <span className="text-zinc-500 animate-pulse">...</span>
+                              ) : analysisFailed ? (
+                                <span className="text-red-500 text-xs">failed</span>
+                              ) : t.endHour != null ? (
+                                <span>
+                                  {t.endHour}:{String(t.endMinute ?? 0).padStart(2, "0")}
+                                </span>
+                              ) : (
+                                <span className="text-zinc-600">—</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              );
+            })()}
           </div>
         )}
       </main>

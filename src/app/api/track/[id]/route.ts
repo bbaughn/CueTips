@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calcHourMinute } from "@/lib/hour-minute";
 
 // GET /api/track/[id] - track detail with user overrides merged
 // NOTE: Prisma + PrismaPg adapter has a bug where multiple top-level
@@ -38,6 +39,8 @@ export async function GET(
   });
 
   const firstSection = sections[0] ?? null;
+  const lastSection =
+    sections.length > 1 ? sections[sections.length - 1] : null;
   const firstOverride = firstSection?.userOverrides[0] ?? null;
 
   // Canonical values from analysis
@@ -71,6 +74,9 @@ export async function GET(
     if (firstOverride.tuning !== null) effectiveTuning = firstOverride.tuning;
   }
 
+  // Calculate effective hour/minute from effective values
+  const effectiveHm = calcHourMinute(effectiveBpm, effectiveRoot, effectiveMode, effectiveTuning);
+
   return NextResponse.json({
     id: track.id,
     title: track.title,
@@ -88,6 +94,8 @@ export async function GET(
       root: canonicalRoot,
       mode: canonicalMode,
       tuning: firstSection?.tuning ?? null,
+      hour: firstSection?.hour ?? null,
+      minute: firstSection?.minute ?? null,
       barsPercussion: track.barsPercussion,
       swing: track.swing,
     },
@@ -95,6 +103,12 @@ export async function GET(
     root: effectiveRoot,
     mode: effectiveMode,
     tuning: effectiveTuning,
+    hour: effectiveHm?.hour ?? null,
+    minute: effectiveHm?.minute ?? null,
+    endBpm: lastSection?.bpm ?? null,
+    endKey: lastSection?.key ?? null,
+    endHour: lastSection?.hour ?? null,
+    endMinute: lastSection?.minute ?? null,
     barsPercussion: trackPref?.barsPercussionOverride ?? track.barsPercussion,
     swing: trackPref?.swingOverride ?? track.swing,
     hasOverrides: !!(trackPref || firstOverride),
@@ -147,6 +161,13 @@ export async function PUT(
   // Save section-level overrides
   const isNoKey = !root || root === "none";
   const keyStr = isNoKey ? null : (mode ? `${root} ${mode}` : root);
+  const overrideTuning = isNoKey ? null : (tuning != null ? tuning : null);
+  const hm = calcHourMinute(
+    bpm ?? null,
+    isNoKey ? null : root,
+    isNoKey ? null : mode,
+    overrideTuning,
+  );
 
   await prisma.userSectionOverride.upsert({
     where: {
@@ -157,12 +178,16 @@ export async function PUT(
       sectionId: firstSectionId,
       bpm: bpm != null ? bpm : null,
       key: keyStr,
-      tuning: isNoKey ? null : (tuning != null ? tuning : null),
+      tuning: overrideTuning,
+      hour: hm?.hour ?? null,
+      minute: hm?.minute ?? null,
     },
     update: {
       bpm: bpm != null ? bpm : null,
       key: keyStr,
-      tuning: isNoKey ? null : (tuning != null ? tuning : null),
+      tuning: overrideTuning,
+      hour: hm?.hour ?? null,
+      minute: hm?.minute ?? null,
     },
   });
 
