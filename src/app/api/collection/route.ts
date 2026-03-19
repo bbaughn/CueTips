@@ -104,48 +104,45 @@ export async function POST(req: Request) {
     update: {},
   });
 
-  // For new imports, kick off YouTube search + QAnalyzer in the background
+  // For new imports, find YouTube URLs and submit to QAnalyzer
   if (isNewImport) {
     const releaseArtist = release.artist;
     const tracks = release.tracks;
 
-    // Fire and forget — don't block the response
-    (async () => {
-      for (const track of tracks) {
-        try {
-          const artist = track.artist || releaseArtist;
-          const ytUrl = await findYoutubeUrl(artist, track.title);
-          if (!ytUrl) {
-            await prisma.track.update({
-              where: { id: track.id },
-              data: { analysisStatus: "no_youtube" },
-            });
-            continue;
-          }
-
+    for (const track of tracks) {
+      try {
+        const artist = track.artist || releaseArtist;
+        const ytUrl = await findYoutubeUrl(artist, track.title);
+        if (!ytUrl) {
           await prisma.track.update({
             where: { id: track.id },
-            data: { youtubeUrl: ytUrl },
+            data: { analysisStatus: "no_youtube" },
           });
-
-          // Submit to QAnalyzer
-          const job = await submitAnalysis(ytUrl);
-          await prisma.track.update({
-            where: { id: track.id },
-            data: {
-              analysisJobId: job.job_id,
-              analysisStatus: "queued",
-            },
-          });
-        } catch (err) {
-          console.error(`YouTube/analysis failed for track ${track.id}:`, err);
-          await prisma.track.update({
-            where: { id: track.id },
-            data: { analysisStatus: "error" },
-          }).catch(() => {});
+          continue;
         }
+
+        await prisma.track.update({
+          where: { id: track.id },
+          data: { youtubeUrl: ytUrl },
+        });
+
+        // Submit to QAnalyzer
+        const job = await submitAnalysis(ytUrl);
+        await prisma.track.update({
+          where: { id: track.id },
+          data: {
+            analysisJobId: job.job_id,
+            analysisStatus: "queued",
+          },
+        });
+      } catch (err) {
+        console.error(`YouTube/analysis failed for track ${track.id}:`, err);
+        await prisma.track.update({
+          where: { id: track.id },
+          data: { analysisStatus: "error" },
+        }).catch(() => {});
       }
-    })();
+    }
   }
 
   return NextResponse.json({ success: true, releaseId: release.id });
