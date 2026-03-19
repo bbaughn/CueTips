@@ -27,7 +27,10 @@ export async function POST(req: Request) {
         include: {
           tracks: {
             where: {
-              analysisStatus: { in: ["error", "failed", "no_youtube"] },
+              OR: [
+                { analysisStatus: { in: ["error", "failed", "no_youtube"] } },
+                { analysisStatus: null },
+              ],
             },
           },
         },
