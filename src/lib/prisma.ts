@@ -15,7 +15,6 @@ function getPool() {
     globalForPrisma.pgPool = new pg.Pool({
       connectionString: process.env.DATABASE_URL_DIRECT!,
       max: 2,
-      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
     });
   }
   return globalForPrisma.pgPool;
