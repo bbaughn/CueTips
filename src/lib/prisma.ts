@@ -1,29 +1,18 @@
 import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig, Pool } from "@neondatabase/serverless";
+import ws from "ws";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pg = require("pg");
+neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pgPool: any;
 };
 
-function getPool() {
-  if (!globalForPrisma.pgPool) {
-    globalForPrisma.pgPool = new pg.Pool({
-      connectionString: process.env.DATABASE_URL_DIRECT!,
-      max: 2,
-    });
-  }
-  return globalForPrisma.pgPool;
-}
-
 function createPrismaClient() {
-  const pool = getPool();
-  // PrismaPg accepts a pg.Pool instance as first arg
-  const adapter = new PrismaPg(pool);
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL_DIRECT! });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adapter = new PrismaNeon(pool as any);
   return new PrismaClient({ adapter });
 }
 
