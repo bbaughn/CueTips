@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  return NextResponse.json({
-    hasDatabaseUrl: !!process.env.DATABASE_URL,
-    hasDatabaseUrlDirect: !!process.env.DATABASE_URL_DIRECT,
-    databaseUrlDirectPrefix: process.env.DATABASE_URL_DIRECT?.substring(0, 20) || "NOT SET",
-    nodeEnv: process.env.NODE_ENV,
-    envKeys: Object.keys(process.env).filter(k => k.includes("DATABASE") || k.includes("NEXT")),
-  });
+  try {
+    const result = await prisma.$queryRawUnsafe("SELECT 1 as ok");
+    return NextResponse.json({ db: "connected", result });
+  } catch (e: unknown) {
+    const err = e as Error;
+    return NextResponse.json({ db: "failed", error: err.message }, { status: 500 });
+  }
 }
