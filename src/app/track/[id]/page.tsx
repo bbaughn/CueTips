@@ -30,6 +30,7 @@ interface TrackDetail {
     hour: number | null;
     minute: number | null;
     barsPercussion: number | null;
+    noDrums: boolean | null;
     swing: boolean | null;
   };
   bpm: number | null;
@@ -43,6 +44,7 @@ interface TrackDetail {
   endHour: number | null;
   endMinute: number | null;
   barsPercussion: number | null;
+  noDrums: boolean | null;
   swing: boolean | null;
   hasOverrides: boolean;
   firstSectionId: string | null;
@@ -249,7 +251,7 @@ export default function TrackPage() {
                   hour={track.hour}
                   minute={track.minute}
                   tuning={track.tuning}
-                  noDrums={track.barsPercussion === 0}
+                  noDrums={track.noDrums === true}
                   size={120}
                 />
               </div>

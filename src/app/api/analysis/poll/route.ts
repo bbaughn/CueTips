@@ -72,6 +72,7 @@ export async function POST() {
           where: { id: track.id },
           data: {
             barsPercussion: g.bars_percussion_rounded,
+            noDrums: g.no_drums ?? false,
             swing: g.swing,
             analysisStatus: "succeeded",
           },

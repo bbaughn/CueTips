@@ -104,6 +104,7 @@ export async function POST(req: Request) {
           data: {
             analysisJobId: job.job_id,
             barsPercussion: g.bars_percussion_rounded,
+            noDrums: g.no_drums ?? false,
             swing: g.swing,
             analysisStatus: "succeeded",
           },

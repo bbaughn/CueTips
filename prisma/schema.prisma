@@ -50,6 +50,7 @@ model Track {
   position        String?
   duration        String?
   barsPercussion  Int?    @map("bars_percussion")
+  noDrums         Boolean? @map("no_drums")
   swing           Boolean? @map("swing")
   youtubeUrl      String?  @map("youtube_url")
   analysisJobId   String?  @map("analysis_job_id")
