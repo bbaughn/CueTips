@@ -49,9 +49,36 @@ export default function ReleasePage() {
 
   const id = params.id as string;
 
+  const [analyzing, setAnalyzing] = useState(false);
+
   const hasPending = release?.tracks.some(
     (t) => t.analysisStatus === "queued" || t.analysisStatus === "running"
   );
+
+  const hasUnanalyzed = release?.tracks.some(
+    (t) =>
+      !t.bpm &&
+      t.analysisStatus !== "queued" &&
+      t.analysisStatus !== "running"
+  );
+
+  async function analyzeRelease() {
+    if (!release) return;
+    setAnalyzing(true);
+    try {
+      const res = await fetch("/api/admin/reanalyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ releaseId: release.id }),
+      });
+      if (res.ok) {
+        const refreshed = await fetch(`/api/release/${id}`);
+        if (refreshed.ok) setRelease(await refreshed.json());
+      }
+    } finally {
+      setAnalyzing(false);
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/release/${id}`)
@@ -127,6 +154,15 @@ export default function ReleasePage() {
                   <span className="text-zinc-500">{release.catNo}</span>
                 )}
               </div>
+              {hasUnanalyzed && (
+                <button
+                  onClick={analyzeRelease}
+                  disabled={analyzing}
+                  className="mt-4 px-4 py-2 text-sm bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded transition"
+                >
+                  {analyzing ? "Submitting..." : "Analyze Tracks"}
+                </button>
+              )}
             </div>
           </div>
         </div>
