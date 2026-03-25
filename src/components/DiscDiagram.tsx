@@ -17,6 +17,14 @@ const COLORS: [number, number, number][] = [
   [242, 146, 43],  // 11: Melon
 ];
 
+// Original sketch.js dimensions
+const SRC_DISC = 156;
+const SRC_HEIGHT = 216;
+const SRC_DISC_CY = 98; // 20 + DISC_WIDTH/2
+const SRC_WIDTH = SRC_DISC + 24; // disc + 12px padding each side
+
+const FONT = '"Myriad Pro", "Myriad Pro Regular", sans-serif';
+
 interface DiscDiagramProps {
   hour: number | null;
   minute: number | null;
@@ -51,17 +59,21 @@ function drawDisc(
 ) {
   const s = (v: number) => v * scale;
 
-  const discRadius = s(78); // 156 / 2
-  const innerRadius = s(49); // 98 / 2
-  const centerRadius = s(15.5); // 31 / 2
+  const discRadius = s(78);
+  const innerRadius = s(49);
+  const centerRadius = s(15.5);
   const hourTextRadius = s(33.5);
   const minTextRadius = s(64);
 
   const hasHour = hour != null;
   const hasMinute = minute != null;
 
-  const discColor = hasHour ? COLORS[hour % 12] : [60, 60, 60] as [number, number, number];
-  const innerColor = hasMinute ? COLORS[Math.floor(minute / 5)] : [40, 40, 40] as [number, number, number];
+  const discColor = hasHour
+    ? COLORS[hour % 12]
+    : ([60, 60, 60] as [number, number, number]);
+  const innerColor = hasMinute
+    ? COLORS[Math.floor(minute / 5)]
+    : ([40, 40, 40] as [number, number, number]);
 
   // --- Outer disc ---
   ctx.fillStyle = rgb(discColor);
@@ -95,7 +107,6 @@ function drawDisc(
   ctx.fill();
   ctx.stroke();
 
-  // Reset line width for subsequent drawing
   ctx.lineWidth = s(2.5);
 
   // --- Hour arc marker (white wedge on inner circle) ---
@@ -112,7 +123,7 @@ function drawDisc(
 
   // --- Text setup ---
   const fontSize = Math.round(s(24));
-  ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.font = `${fontSize}px ${FONT}`;
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -151,41 +162,44 @@ export default function DiscDiagram({
 }: DiscDiagramProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const scale = size / SRC_DISC;
+  const cssW = Math.ceil(SRC_WIDTH * scale);
+  const cssH = Math.ceil(SRC_HEIGHT * scale);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const pad = 4;
-    const cssSize = size + pad * 2;
 
-    canvas.width = cssSize * dpr;
-    canvas.height = cssSize * dpr;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, cssSize, cssSize);
 
-    const scale = size / 156;
+    // White background matching sketch.js
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, cssW, cssH);
+
     drawDisc(
       ctx,
-      cssSize / 2,
-      cssSize / 2,
+      cssW / 2,
+      SRC_DISC_CY * scale,
       hour,
       minute,
       tuning ?? 0,
       noDrums,
       scale,
     );
-  }, [hour, minute, tuning, noDrums, size]);
+  }, [hour, minute, tuning, noDrums, size, scale, cssW, cssH]);
 
-  const cssSize = size + 8;
   return (
     <canvas
       ref={canvasRef}
-      style={{ width: cssSize, height: cssSize }}
+      style={{ width: cssW, height: cssH }}
     />
   );
 }
