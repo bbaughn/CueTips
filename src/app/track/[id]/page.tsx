@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import DiscDiagram from "@/components/DiscDiagram";
 
 const ROOT_NOTES = [
   "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B",
@@ -242,6 +243,17 @@ export default function TrackPage() {
                 </p>
               )}
             </div>
+            {(track.bpm != null || track.root != null) && (
+              <div className="shrink-0">
+                <DiscDiagram
+                  hour={track.hour}
+                  minute={track.minute}
+                  tuning={track.tuning}
+                  noDrums={track.barsPercussion === 0}
+                  size={120}
+                />
+              </div>
+            )}
             <div className="shrink-0">
               {editing ? (
                 <div className="flex gap-2">
