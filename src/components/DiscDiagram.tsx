@@ -52,6 +52,8 @@ interface DiscDiagramProps {
   range?: number | null;
   bpm?: number | null;
   root?: string | null;
+  mode?: string | null;
+  title?: string | null;
   tuning?: number | null;
   barsPercussion?: number | null;
   swing?: boolean | null;
@@ -71,8 +73,9 @@ function rgb(c: [number, number, number]): string {
 // Key text helpers (matching sketch.js drawKey)
 // ---------------------------------------------------------------------------
 
-function formatKey(root: string, tuning: number): string {
+function formatKey(root: string, mode: string | null, tuning: number): string {
   let k = root.replace("b", "\u266D"); // ♭
+  if (mode) k += " " + mode;
   if (tuning !== 0) k += (tuning > 0 ? "+" : "") + tuning + "c";
   return k;
 }
@@ -80,10 +83,11 @@ function formatKey(root: string, tuning: number): string {
 function measureKeyText(
   ctx: CanvasRenderingContext2D,
   root: string,
+  mode: string | null,
   tuning: number,
   flatW: number,
 ): number {
-  const formatted = formatKey(root, tuning);
+  const formatted = formatKey(root, mode, tuning);
   let w = 0;
   for (const ch of formatted) {
     w += ch === "\u266D" ? flatW : ctx.measureText(ch).width;
@@ -94,6 +98,7 @@ function measureKeyText(
 function drawKeyText(
   ctx: CanvasRenderingContext2D,
   root: string,
+  mode: string | null,
   tuning: number,
   x: number,
   y: number,
@@ -101,7 +106,7 @@ function drawKeyText(
   fontFamily: string,
   fontSize: number,
 ) {
-  const formatted = formatKey(root, tuning);
+  const formatted = formatKey(root, mode, tuning);
   let xPos = x;
   let firstCharW = 0;
 
@@ -281,6 +286,8 @@ export default function DiscDiagram({
   range,
   bpm,
   root,
+  mode,
+  title,
   tuning,
   barsPercussion,
   swing,
@@ -311,7 +318,7 @@ export default function DiscDiagram({
 
       const bpmText = bpm != null ? String(bpm) : null;
       const bpmW = bpmText ? measure.measureText(bpmText).width : 0;
-      const keyW = root ? measureKeyText(measure, root, tuning ?? 0, flatW) : 0;
+      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0, flatW) : 0;
       const labelW = Math.max(bpmW, keyW);
 
       const hasPerc = barsPercussion != null && barsPercussion !== 0;
@@ -392,6 +399,7 @@ export default function DiscDiagram({
         drawKeyText(
           ctx,
           root,
+          mode ?? null,
           tuning ?? 0,
           turntableRightX - labelW - 2 * sc,
           totalH - S.KEY_BOTTOM_OFFSET * sc,
@@ -432,10 +440,20 @@ export default function DiscDiagram({
           py + S.PERC_H * sc / 2 + 2 * sc,
         );
       }
+
+      // --- Title (centered under disc) ---
+      if (title) {
+        const titleFontSize = Math.round(14 * sc);
+        ctx.font = `600 ${titleFontSize}px ${fontFamily}`;
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(title, discCX, totalH - 4 * sc);
+      }
     }
 
     document.fonts.ready.then(render);
-  }, [hour, minute, range, bpm, root, tuning, barsPercussion, swing, noDrums, size]);
+  }, [hour, minute, range, bpm, root, mode, title, tuning, barsPercussion, swing, noDrums, size]);
 
   return <canvas ref={canvasRef} />;
 }

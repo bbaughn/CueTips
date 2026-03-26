@@ -254,6 +254,8 @@ export default function TrackPage() {
                   range={track.range}
                   bpm={track.bpm}
                   root={track.root}
+                  mode={track.mode}
+                  title={track.title}
                   tuning={track.tuning}
                   barsPercussion={track.barsPercussion}
                   swing={track.swing}
