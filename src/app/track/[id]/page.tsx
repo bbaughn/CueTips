@@ -384,6 +384,13 @@ export default function TrackPage() {
               </Field>
             )}
 
+            {/* Range */}
+            <Field label="Range" pending={pending}>
+              <span className="text-2xl font-mono">
+                {track.range != null ? track.range : "—"}
+              </span>
+            </Field>
+
             {/* Tuning */}
             {!noKey && (
               <Field label="Tuning (cents)" pending={pending}>
