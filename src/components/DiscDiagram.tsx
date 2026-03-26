@@ -124,7 +124,7 @@ function drawDisc(
 
   // --- Text setup ---
   const fontSize = Math.round(s(24));
-  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.font = `600 ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";

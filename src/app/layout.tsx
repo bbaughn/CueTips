@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 const sourceSans = Source_Sans_3({
   variable: "--font-disc",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["600"],
 });
 
 export const metadata: Metadata = {
