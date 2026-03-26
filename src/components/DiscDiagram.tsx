@@ -89,7 +89,7 @@ function drawDisc(
     const endMin = lerp(minute + 5 - 15, 0, 60, 0, 2 * Math.PI);
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, discRadius, startMin, endMin);
+    ctx.arc(cx, cy, discRadius + 1, startMin, endMin);
     ctx.closePath();
     ctx.fill();
   }
