@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Source_Sans_3 } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +13,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const sourceSans = Source_Sans_3({
+const myriadPro = localFont({
+  src: "../fonts/MyriadPro-Semibold.otf",
   variable: "--font-disc",
-  subsets: ["latin"],
-  weight: ["600"],
+  weight: "600",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${sourceSans.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${myriadPro.variable} antialiased`}
       >
         {children}
       </body>
