@@ -252,7 +252,11 @@ export default function TrackPage() {
                   hour={track.hour}
                   minute={track.minute}
                   range={track.range}
+                  bpm={track.bpm}
+                  root={track.root}
                   tuning={track.tuning}
+                  barsPercussion={track.barsPercussion}
+                  swing={track.swing}
                   noDrums={track.noDrums === true}
                   size={120}
                 />
