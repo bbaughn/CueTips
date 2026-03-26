@@ -154,15 +154,13 @@ export default function ReleasePage() {
                   <span className="text-zinc-500">{release.catNo}</span>
                 )}
               </div>
-              {hasUnanalyzed && (
-                <button
-                  onClick={analyzeRelease}
-                  disabled={analyzing}
-                  className="mt-4 px-4 py-2 text-sm bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded transition"
-                >
-                  {analyzing ? "Submitting..." : "Analyze Tracks"}
-                </button>
-              )}
+              <button
+                onClick={analyzeRelease}
+                disabled={analyzing}
+                className="mt-4 px-4 py-2 text-sm bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded transition"
+              >
+                {analyzing ? "Submitting..." : "Analyze Tracks"}
+              </button>
             </div>
           </div>
         </div>
