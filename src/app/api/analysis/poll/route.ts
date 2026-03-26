@@ -62,6 +62,7 @@ export async function POST() {
               tuning,
               hour: hm?.hour ?? null,
               minute: hm?.minute ?? null,
+              range: s.range ?? null,
               ordinal: i,
             };
           }),

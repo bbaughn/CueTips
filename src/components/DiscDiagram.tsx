@@ -28,6 +28,7 @@ const FALLBACK_FONT = "sans-serif";
 interface DiscDiagramProps {
   hour: number | null;
   minute: number | null;
+  range?: number | null;
   tuning?: number | null;
   noDrums?: boolean;
   size?: number;
@@ -53,6 +54,7 @@ function drawDisc(
   cy: number,
   hour: number | null,
   minute: number | null,
+  range: number | null,
   tuning: number,
   noDrums: boolean,
   scale: number,
@@ -68,9 +70,10 @@ function drawDisc(
 
   const hasHour = hour != null;
   const hasMinute = minute != null;
+  const hasRange = range != null;
 
-  const discColor = hasHour
-    ? COLORS[hour % 12]
+  const discColor = hasRange
+    ? COLORS[range % 12]
     : ([60, 60, 60] as [number, number, number]);
   const innerColor = hasMinute
     ? COLORS[Math.floor(minute / 5)]
@@ -157,6 +160,7 @@ function drawDisc(
 export default function DiscDiagram({
   hour,
   minute,
+  range,
   tuning,
   noDrums = false,
   size = 156,
@@ -200,6 +204,7 @@ export default function DiscDiagram({
         SRC_DISC_CY * scale,
         hour,
         minute,
+        range ?? null,
         tuning ?? 0,
         noDrums,
         scale,
@@ -209,7 +214,7 @@ export default function DiscDiagram({
 
     // Wait for fonts to load so canvas text renders correctly
     document.fonts.ready.then(draw);
-  }, [hour, minute, tuning, noDrums, size, scale, cssW, cssH]);
+  }, [hour, minute, range, tuning, noDrums, size, scale, cssW, cssH]);
 
   return (
     <canvas

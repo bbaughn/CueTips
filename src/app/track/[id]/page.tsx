@@ -39,6 +39,7 @@ interface TrackDetail {
   tuning: number | null;
   hour: number | null;
   minute: number | null;
+  range: number | null;
   endBpm: number | null;
   endKey: string | null;
   endHour: number | null;
@@ -250,6 +251,7 @@ export default function TrackPage() {
                 <DiscDiagram
                   hour={track.hour}
                   minute={track.minute}
+                  range={track.range}
                   tuning={track.tuning}
                   noDrums={track.noDrums === true}
                   size={120}

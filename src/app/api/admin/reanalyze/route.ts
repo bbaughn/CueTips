@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
         await prisma.section.deleteMany({ where: { trackId: track.id } });
         await prisma.section.createMany({
-          data: sections.map((s: { tempo_bpm_rounded?: number | null; tempo_bpm: number | null; key: string | null; mode: string | null; tuning?: number | null }, i: number) => {
+          data: sections.map((s: { tempo_bpm_rounded?: number | null; tempo_bpm: number | null; key: string | null; mode: string | null; tuning?: number | null; range?: number | null }, i: number) => {
             const bpm = s.tempo_bpm_rounded ?? s.tempo_bpm;
             const key = s.key && s.mode ? `${s.key} ${s.mode}` : s.key;
             const rawTuning = s.tuning ?? null;
@@ -94,6 +94,7 @@ export async function POST(req: Request) {
               tuning,
               hour: hm?.hour ?? null,
               minute: hm?.minute ?? null,
+              range: s.range ?? null,
               ordinal: i,
             };
           }),

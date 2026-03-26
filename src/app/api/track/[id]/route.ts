@@ -106,6 +106,7 @@ export async function GET(
     tuning: effectiveTuning,
     hour: effectiveHm?.hour ?? null,
     minute: effectiveHm?.minute ?? null,
+    range: firstSection?.range ?? null,
     endBpm: lastSection?.bpm ?? null,
     endKey: lastSection?.key ?? null,
     endHour: lastSection?.hour ?? null,

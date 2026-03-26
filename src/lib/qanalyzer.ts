@@ -22,6 +22,7 @@ export interface AnalysisSection {
   confidence: number;
   tuning: number | null;
   tuning_rounded: number | null;
+  range: number | null;
 }
 
 export interface AnalysisResult {
