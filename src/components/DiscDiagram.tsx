@@ -188,8 +188,8 @@ export default function DiscDiagram({
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, cssW, cssH);
 
-      // Read the font-family loaded by next/font via CSS variable
-      const discVar = getComputedStyle(document.documentElement)
+      // Read the font-family loaded by next/font via CSS variable (set on <body>)
+      const discVar = getComputedStyle(document.body)
         .getPropertyValue("--font-disc")
         .trim();
       const fontFamily = discVar ? `${discVar}, ${FALLBACK_FONT}` : FALLBACK_FONT;
