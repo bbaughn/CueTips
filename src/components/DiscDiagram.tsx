@@ -23,7 +23,7 @@ const SRC_HEIGHT = 216;
 const SRC_DISC_CY = 98; // 20 + DISC_WIDTH/2
 const SRC_WIDTH = SRC_DISC + 24; // disc + 12px padding each side
 
-const FONT = '"Myriad Pro", "Myriad Pro Regular", sans-serif';
+const FALLBACK_FONT = "sans-serif";
 
 interface DiscDiagramProps {
   hour: number | null;
@@ -56,6 +56,7 @@ function drawDisc(
   tuning: number,
   noDrums: boolean,
   scale: number,
+  fontFamily: string,
 ) {
   const s = (v: number) => v * scale;
 
@@ -123,7 +124,7 @@ function drawDisc(
 
   // --- Text setup ---
   const fontSize = Math.round(s(24));
-  ctx.font = `${fontSize}px ${FONT}`;
+  ctx.font = `${fontSize}px ${fontFamily}`;
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -170,30 +171,44 @@ export default function DiscDiagram({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    function draw() {
+      const cvs = canvasRef.current;
+      if (!cvs) return;
 
-    canvas.width = cssW * dpr;
-    canvas.height = cssH * dpr;
+      const dpr = window.devicePixelRatio || 1;
+      cvs.width = cssW * dpr;
+      cvs.height = cssH * dpr;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const ctx = cvs.getContext("2d");
+      if (!ctx) return;
 
-    ctx.scale(dpr, dpr);
+      ctx.scale(dpr, dpr);
 
-    // White background matching sketch.js
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, cssW, cssH);
+      // White background matching sketch.js
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, cssW, cssH);
 
-    drawDisc(
-      ctx,
-      cssW / 2,
-      SRC_DISC_CY * scale,
-      hour,
-      minute,
-      tuning ?? 0,
-      noDrums,
-      scale,
-    );
+      // Read the font-family loaded by next/font via CSS variable
+      const discVar = getComputedStyle(document.documentElement)
+        .getPropertyValue("--font-disc")
+        .trim();
+      const fontFamily = discVar ? `${discVar}, ${FALLBACK_FONT}` : FALLBACK_FONT;
+
+      drawDisc(
+        ctx,
+        cssW / 2,
+        SRC_DISC_CY * scale,
+        hour,
+        minute,
+        tuning ?? 0,
+        noDrums,
+        scale,
+        fontFamily,
+      );
+    }
+
+    // Wait for fonts to load so canvas text renders correctly
+    document.fonts.ready.then(draw);
   }, [hour, minute, tuning, noDrums, size, scale, cssW, cssH]);
 
   return (
