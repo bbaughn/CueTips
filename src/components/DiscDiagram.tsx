@@ -73,9 +73,19 @@ function rgb(c: [number, number, number]): string {
 // Key text helpers (matching sketch.js drawKey)
 // ---------------------------------------------------------------------------
 
+const MODE_ABBREV: Record<string, string> = {
+  major: "",
+  minor: "m",
+  dorian: "d",
+  phrygian: "p",
+  lydian: "l",
+  mixolydian: "x",
+  locrian: "c",
+};
+
 function formatKey(root: string, mode: string | null, tuning: number): string {
   let k = root.replace("b", "\u266D"); // ♭
-  if (mode) k += " " + mode;
+  if (mode) k += MODE_ABBREV[mode] ?? mode.charAt(0);
   if (tuning !== 0) k += (tuning > 0 ? "+" : "") + tuning + "c";
   return k;
 }
@@ -443,8 +453,7 @@ export default function DiscDiagram({
 
       // --- Title (centered under disc) ---
       if (title) {
-        const titleFontSize = Math.round(14 * sc);
-        ctx.font = `600 ${titleFontSize}px ${fontFamily}`;
+        ctx.font = `600 ${fontSize}px ${fontFamily}`;
         ctx.fillStyle = "black";
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
