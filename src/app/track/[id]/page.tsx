@@ -62,6 +62,7 @@ interface CollectionTrack {
   hour: number | null;
   minute: number | null;
   range: number | null;
+  barsPercussion: number | null;
   endBpm: number | null;
   endKey: string | null;
   endHour: number | null;
@@ -156,6 +157,7 @@ export default function TrackPage() {
   const [hourTol, setHourTol] = useState(2);
   const [minTol, setMinTol] = useState(10);
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>("+/-1");
+  const [percIntros, setPercIntros] = useState(false);
 
   useEffect(() => {
     fetch(`/api/track/${id}`)
@@ -542,7 +544,7 @@ export default function TrackPage() {
         {track.hour != null && (
           <div className="mt-10">
             <h2 className="text-lg font-semibold mb-3">Compatible Tracks</h2>
-            <div className="flex items-center gap-4 mb-4 text-sm">
+            <div className="flex items-center gap-4 mb-4 text-sm flex-wrap">
               <label className="flex items-center gap-2 text-zinc-400">
                 Hour tolerance
                 <input
@@ -585,15 +587,32 @@ export default function TrackPage() {
                   <option value="off">Off</option>
                 </select>
               </label>
+              <label className="flex items-center gap-2 text-zinc-400 ml-auto cursor-pointer">
+                <span>Perc Intros</span>
+                <button
+                  type="button"
+                  onClick={() => setPercIntros(!percIntros)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+                    percIntros ? "bg-amber-600" : "bg-zinc-700"
+                  }`}
+                  aria-pressed={percIntros}
+                >
+                  <span
+                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${
+                      percIntros ? "translate-x-5" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </label>
             </div>
             {allTracksLoading ? (
               <p className="text-zinc-500 text-sm animate-pulse">
                 Loading compatible tracks...
               </p>
             ) : (() => {
-              const compatible = allTracks.filter(
-                (t) =>
-                  t.id !== track.id &&
+              const compatible = allTracks.filter((t) => {
+                if (t.id === track.id) return false;
+                const matchesCompat =
                   t.hour != null &&
                   t.minute != null &&
                   isCompatible(
@@ -604,8 +623,13 @@ export default function TrackPage() {
                     hourTol,
                     minTol
                   ) &&
-                  rangeMatches(track.range, t.range, rangeFilter)
-              );
+                  rangeMatches(track.range, t.range, rangeFilter);
+                const matchesPerc =
+                  percIntros &&
+                  (t.barsPercussion ?? 0) > 0 &&
+                  rangeMatches(track.range, t.range, rangeFilter);
+                return matchesCompat || matchesPerc;
+              });
               if (compatible.length === 0) {
                 return (
                   <p className="text-zinc-500 text-sm">
