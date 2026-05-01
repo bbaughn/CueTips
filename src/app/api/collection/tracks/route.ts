@@ -48,6 +48,7 @@ export async function GET() {
         key: firstSection?.key ?? null,
         hour: firstSection?.hour ?? null,
         minute: firstSection?.minute ?? null,
+        range: firstSection?.range ?? null,
         endBpm: lastSection?.bpm ?? null,
         endKey: lastSection?.key ?? null,
         endHour: lastSection?.hour ?? null,

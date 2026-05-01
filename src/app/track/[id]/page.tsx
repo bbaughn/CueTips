@@ -61,10 +61,33 @@ interface CollectionTrack {
   key: string | null;
   hour: number | null;
   minute: number | null;
+  range: number | null;
   endBpm: number | null;
   endKey: string | null;
   endHour: number | null;
   endMinute: number | null;
+}
+
+type RangeFilter = "+2" | "+/-1" | "0" | "-2" | "off";
+
+function rangeMatches(
+  trackRange: number | null,
+  otherRange: number | null,
+  filter: RangeFilter,
+): boolean {
+  if (filter === "off") return true;
+  if (trackRange == null || otherRange == null) return false;
+  const diff = otherRange - trackRange;
+  switch (filter) {
+    case "+2":
+      return diff >= 0 && diff <= 2;
+    case "+/-1":
+      return Math.abs(diff) <= 1;
+    case "0":
+      return diff === 0;
+    case "-2":
+      return diff <= 0 && diff >= -2;
+  }
 }
 
 function isCompatible(
@@ -132,6 +155,7 @@ export default function TrackPage() {
   const [allTracksLoading, setAllTracksLoading] = useState(true);
   const [hourTol, setHourTol] = useState(2);
   const [minTol, setMinTol] = useState(10);
+  const [rangeFilter, setRangeFilter] = useState<RangeFilter>("+/-1");
 
   useEffect(() => {
     fetch(`/api/track/${id}`)
@@ -547,6 +571,20 @@ export default function TrackPage() {
                   className="w-16 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-white text-center focus:outline-none focus:border-amber-500"
                 />
               </label>
+              <label className="flex items-center gap-2 text-zinc-400">
+                Range
+                <select
+                  value={rangeFilter}
+                  onChange={(e) => setRangeFilter(e.target.value as RangeFilter)}
+                  className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="+2">+2</option>
+                  <option value="+/-1">+/-1</option>
+                  <option value="0">0</option>
+                  <option value="-2">-2</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
             </div>
             {allTracksLoading ? (
               <p className="text-zinc-500 text-sm animate-pulse">
@@ -565,7 +603,8 @@ export default function TrackPage() {
                     t.minute,
                     hourTol,
                     minTol
-                  )
+                  ) &&
+                  rangeMatches(track.range, t.range, rangeFilter)
               );
               if (compatible.length === 0) {
                 return (
