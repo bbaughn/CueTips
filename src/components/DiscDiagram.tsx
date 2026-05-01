@@ -96,10 +96,22 @@ function measureKeyText(
   mode: string | null,
   tuning: number,
   sc: number,
+  fontSize: number,
+  fontFamily: string,
 ): number {
   const formatted = formatKey(root, mode, tuning);
-  let w = ctx.measureText(formatted).width;
-  if (formatted.includes("♭")) w += 1 * sc;
+  const baseFont = ctx.font;
+  const flatFont = `600 ${fontSize + 1}px ${fontFamily}`;
+  let w = 0;
+  for (const ch of formatted) {
+    if (ch === "♭") {
+      ctx.font = flatFont;
+      w += 1 * sc + ctx.measureText(ch).width;
+      ctx.font = baseFont;
+    } else {
+      w += ctx.measureText(ch).width;
+    }
+  }
   return w;
 }
 
@@ -111,17 +123,24 @@ function drawKeyText(
   x: number,
   y: number,
   sc: number,
+  fontSize: number,
+  fontFamily: string,
 ) {
   const formatted = formatKey(root, mode, tuning);
+  const baseFont = ctx.font;
+  const flatFont = `600 ${fontSize + 1}px ${fontFamily}`;
   let xPos = x;
   for (const ch of formatted) {
     if (ch === "♭") {
       xPos += 1 * sc;
+      ctx.font = flatFont;
       ctx.fillText(ch, xPos, y - 1 * sc);
+      xPos += ctx.measureText(ch).width;
+      ctx.font = baseFont;
     } else {
       ctx.fillText(ch, xPos, y);
+      xPos += ctx.measureText(ch).width;
     }
-    xPos += ctx.measureText(ch).width;
   }
 }
 
@@ -311,7 +330,7 @@ export default function DiscDiagram({
 
       const bpmText = bpm != null ? String(bpm) : null;
       const bpmW = bpmText ? measure.measureText(bpmText).width : 0;
-      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0, sc) : 0;
+      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0, sc, fontSize, fontFamily) : 0;
       const labelW = Math.max(bpmW, keyW);
 
       const hasPerc = barsPercussion != null && barsPercussion !== 0;
@@ -397,6 +416,8 @@ export default function DiscDiagram({
           turntableRightX - labelW - 2 * sc,
           totalH - S.KEY_BOTTOM_OFFSET * sc,
           sc,
+          fontSize,
+          fontFamily,
         );
       }
 
