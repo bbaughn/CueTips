@@ -95,8 +95,12 @@ function measureKeyText(
   root: string,
   mode: string | null,
   tuning: number,
+  sc: number,
 ): number {
-  return ctx.measureText(formatKey(root, mode, tuning)).width;
+  const formatted = formatKey(root, mode, tuning);
+  let w = ctx.measureText(formatted).width;
+  if (formatted.includes("♭")) w += 2 * sc;
+  return w;
 }
 
 function drawKeyText(
@@ -106,8 +110,19 @@ function drawKeyText(
   tuning: number,
   x: number,
   y: number,
+  sc: number,
 ) {
-  ctx.fillText(formatKey(root, mode, tuning), x, y);
+  const formatted = formatKey(root, mode, tuning);
+  let xPos = x;
+  for (const ch of formatted) {
+    if (ch === "♭") {
+      xPos += 2 * sc;
+      ctx.fillText(ch, xPos, y - 2 * sc);
+    } else {
+      ctx.fillText(ch, xPos, y);
+    }
+    xPos += ctx.measureText(ch).width;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -296,7 +311,7 @@ export default function DiscDiagram({
 
       const bpmText = bpm != null ? String(bpm) : null;
       const bpmW = bpmText ? measure.measureText(bpmText).width : 0;
-      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0) : 0;
+      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0, sc) : 0;
       const labelW = Math.max(bpmW, keyW);
 
       const hasPerc = barsPercussion != null && barsPercussion !== 0;
@@ -381,6 +396,7 @@ export default function DiscDiagram({
           tuning ?? 0,
           turntableRightX - labelW - 2 * sc,
           totalH - S.KEY_BOTTOM_OFFSET * sc,
+          sc,
         );
       }
 
