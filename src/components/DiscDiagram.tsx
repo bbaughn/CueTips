@@ -95,14 +95,8 @@ function measureKeyText(
   root: string,
   mode: string | null,
   tuning: number,
-  flatW: number,
 ): number {
-  const formatted = formatKey(root, mode, tuning);
-  let w = 0;
-  for (const ch of formatted) {
-    w += ch === "\u266D" ? flatW : ctx.measureText(ch).width;
-  }
-  return w;
+  return ctx.measureText(formatKey(root, mode, tuning)).width;
 }
 
 function drawKeyText(
@@ -112,33 +106,8 @@ function drawKeyText(
   tuning: number,
   x: number,
   y: number,
-  flatW: number,
-  fontFamily: string,
-  fontSize: number,
 ) {
-  const formatted = formatKey(root, mode, tuning);
-  let xPos = x;
-  let firstCharW = 0;
-
-  // Draw non-flat chars and track positions
-  for (let i = 0; i < formatted.length; i++) {
-    const ch = formatted[i];
-    if (ch === "\u266D") {
-      xPos += flatW;
-    } else {
-      ctx.fillText(ch, xPos, y);
-      xPos += ctx.measureText(ch).width;
-    }
-    if (i === 0) firstCharW = xPos - x;
-  }
-
-  // Draw flat symbol at 70% size with offset (matching sketch.js)
-  if (formatted.includes("\u266D")) {
-    const origFont = ctx.font;
-    ctx.font = `600 ${Math.round(fontSize * 0.7)}px ${fontFamily}`;
-    ctx.fillText("\u266D", x + firstCharW - fontSize * 0.17, y + fontSize * 0.13);
-    ctx.font = origFont;
-  }
+  ctx.fillText(formatKey(root, mode, tuning), x, y);
 }
 
 // ---------------------------------------------------------------------------
@@ -324,11 +293,10 @@ export default function DiscDiagram({
       // --- Phase 1: measure text to calculate layout width ---
       const measure = document.createElement("canvas").getContext("2d")!;
       measure.font = `600 ${fontSize}px ${fontFamily}`;
-      const flatW = 10 * sc; // fixed flat symbol width (sketch.js)
 
       const bpmText = bpm != null ? String(bpm) : null;
       const bpmW = bpmText ? measure.measureText(bpmText).width : 0;
-      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0, flatW) : 0;
+      const keyW = root ? measureKeyText(measure, root, mode ?? null, tuning ?? 0) : 0;
       const labelW = Math.max(bpmW, keyW);
 
       const hasPerc = barsPercussion != null && barsPercussion !== 0;
@@ -413,9 +381,6 @@ export default function DiscDiagram({
           tuning ?? 0,
           turntableRightX - labelW - 2 * sc,
           totalH - S.KEY_BOTTOM_OFFSET * sc,
-          flatW,
-          fontFamily,
-          fontSize,
         );
       }
 
