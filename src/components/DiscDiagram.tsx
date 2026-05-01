@@ -134,7 +134,7 @@ function drawKeyText(
     if (ch === "♭") {
       xPos += 1 * sc;
       ctx.font = flatFont;
-      ctx.fillText(ch, xPos, y - 1 * sc);
+      ctx.fillText(ch, xPos, y - 2 * sc);
       xPos += ctx.measureText(ch).width;
       ctx.font = baseFont;
     } else {
