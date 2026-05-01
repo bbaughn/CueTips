@@ -50,6 +50,7 @@ export default function ReleasePage() {
   const id = params.id as string;
 
   const [analyzing, setAnalyzing] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const hasPending = release?.tracks.some(
     (t) => t.analysisStatus === "queued" || t.analysisStatus === "running"
@@ -77,6 +78,27 @@ export default function ReleasePage() {
       }
     } finally {
       setAnalyzing(false);
+    }
+  }
+
+  async function removeFromCollection() {
+    if (!release) return;
+    const confirmed = window.confirm(
+      `Remove "${release.title}" from your collection?`
+    );
+    if (!confirmed) return;
+    setRemoving(true);
+    try {
+      const res = await fetch(`/api/collection/${release.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push("/");
+      } else {
+        setRemoving(false);
+      }
+    } catch {
+      setRemoving(false);
     }
   }
 
@@ -154,13 +176,22 @@ export default function ReleasePage() {
                   <span className="text-zinc-500">{release.catNo}</span>
                 )}
               </div>
-              <button
-                onClick={analyzeRelease}
-                disabled={analyzing}
-                className="mt-4 px-4 py-2 text-sm bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded transition"
-              >
-                {analyzing ? "Submitting..." : "Analyze Tracks"}
-              </button>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={analyzeRelease}
+                  disabled={analyzing}
+                  className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded transition"
+                >
+                  {analyzing ? "Submitting..." : "Analyze Tracks"}
+                </button>
+                <button
+                  onClick={removeFromCollection}
+                  disabled={removing}
+                  className="px-4 py-2 text-sm bg-zinc-800 hover:bg-red-700 text-zinc-300 hover:text-white border border-zinc-700 hover:border-red-700 disabled:opacity-50 rounded transition"
+                >
+                  {removing ? "Removing..." : "Remove from Collection"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
