@@ -99,7 +99,7 @@ function measureKeyText(
 ): number {
   const formatted = formatKey(root, mode, tuning);
   let w = ctx.measureText(formatted).width;
-  if (formatted.includes("♭")) w += 2 * sc;
+  if (formatted.includes("♭")) w += 1 * sc;
   return w;
 }
 
@@ -116,8 +116,8 @@ function drawKeyText(
   let xPos = x;
   for (const ch of formatted) {
     if (ch === "♭") {
-      xPos += 2 * sc;
-      ctx.fillText(ch, xPos, y - 2 * sc);
+      xPos += 1 * sc;
+      ctx.fillText(ch, xPos, y - 1 * sc);
     } else {
       ctx.fillText(ch, xPos, y);
     }
