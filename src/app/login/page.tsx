@@ -11,11 +11,29 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  async function handleResend() {
+    setError("");
+    setNotice("");
+    setLoading(true);
+    const res = await fetch("/api/auth/resend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    setNotice(data.message || "If that email needs verification, we've sent a new link.");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setNotice("");
+    setNeedsVerification(false);
     setLoading(true);
 
     if (isRegister) {
@@ -24,12 +42,18 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, name }),
       });
+      const data = await res.json();
+      setLoading(false);
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error || "Registration failed");
-        setLoading(false);
         return;
       }
+      // Account created but not yet verified — do not sign in.
+      setNeedsVerification(true);
+      setNotice(
+        `We sent a verification link to ${email}. Click it to finish creating your account.`
+      );
+      return;
     }
 
     const result = await signIn("credentials", {
@@ -41,7 +65,12 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password");
+      if (result.code === "EmailNotVerified") {
+        setNeedsVerification(true);
+        setError("Please verify your email before signing in.");
+      } else {
+        setError("Invalid email or password");
+      }
     } else {
       router.push("/");
       router.refresh();
@@ -85,6 +114,17 @@ export default function LoginPage() {
           />
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
+          {notice && <p className="text-amber-400 text-sm">{notice}</p>}
+          {needsVerification && (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={loading || !email}
+              className="text-sm text-amber-400 hover:text-amber-300 transition disabled:opacity-50"
+            >
+              Resend verification email
+            </button>
+          )}
 
           <button
             type="submit"
@@ -123,6 +163,8 @@ export default function LoginPage() {
           onClick={() => {
             setIsRegister(!isRegister);
             setError("");
+            setNotice("");
+            setNeedsVerification(false);
           }}
           className="mt-4 text-sm text-zinc-400 hover:text-white transition"
         >

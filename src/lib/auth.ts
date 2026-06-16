@@ -1,8 +1,12 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "EmailNotVerified";
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -27,6 +31,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const valid = await compare(password, user.passwordHash);
         if (!valid) return null;
 
+        // Credentials must have a verified email before they can sign in.
+        if (!user.emailVerified) throw new EmailNotVerifiedError();
+
         return { id: user.id, email: user.email, name: user.name };
       },
     }),
@@ -43,9 +50,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
         user.id = existing.id;
+        // Google has already verified this address; mark it verified if it
+        // wasn't (e.g. the user first signed up with email/password).
+        if (!existing.emailVerified) {
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: { emailVerified: new Date() },
+          });
+        }
       } else {
         const created = await prisma.user.create({
-          data: { email, name: user.name ?? null, passwordHash: null } as unknown as Parameters<typeof prisma.user.create>[0]["data"],
+          data: { email, name: user.name ?? null, passwordHash: null, emailVerified: new Date() } as unknown as Parameters<typeof prisma.user.create>[0]["data"],
         });
         user.id = created.id;
       }
