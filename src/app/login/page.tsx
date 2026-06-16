@@ -98,18 +98,20 @@ export default function LoginPage() {
       <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
         {/* Hero / branding */}
         <section className="flex-1 flex flex-col justify-center px-8 py-14 lg:px-16 lg:py-12">
-          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-amber-400/90 drop-shadow">
-            The only tagging system just for vinyl DJs
-          </p>
-          <h1 className="mt-4 text-6xl sm:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
-            Cue<span className="text-amber-500">Tips</span>
-          </h1>
-          <h2 className="mt-5 text-2xl sm:text-3xl font-semibold text-zinc-100 drop-shadow">
-            Mix In Key, Even On Vinyl
-          </h2>
-          <p className="mt-3 max-w-md text-base sm:text-lg text-zinc-300 drop-shadow">
-            Tag, organize, and sticker your vinyl for perfect blends.
-          </p>
+          <div className="max-w-xl rounded-2xl border border-zinc-700/60 bg-zinc-950/80 p-8 sm:p-10 shadow-2xl backdrop-blur-md">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-amber-400/90">
+              The only tagging system just for vinyl DJs
+            </p>
+            <h1 className="mt-4 text-6xl sm:text-7xl font-bold tracking-tight text-white">
+              Cue<span className="text-amber-500">Tips</span>
+            </h1>
+            <h2 className="mt-5 text-2xl sm:text-3xl font-semibold text-zinc-100">
+              Mix In Key, Even On Vinyl
+            </h2>
+            <p className="mt-3 text-base sm:text-lg text-zinc-300">
+              Tag, organize, and sticker your vinyl for perfect blends.
+            </p>
+          </div>
         </section>
 
         {/* Auth */}
