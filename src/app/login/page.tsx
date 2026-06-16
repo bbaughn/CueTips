@@ -92,8 +92,8 @@ export default function LoginPage() {
         placeholder="blur"
         className="object-cover object-center -z-10"
       />
-      {/* Scrim for text legibility over the gray metal */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/75 via-black/55 to-black/80" />
+      {/* Scrim for text legibility over the gray metal (disabled for now) */}
+      {/* <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/75 via-black/55 to-black/80" /> */}
 
       <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
         {/* Hero / branding */}
