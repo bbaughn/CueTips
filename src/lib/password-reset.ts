@@ -2,6 +2,7 @@ import { randomBytes, createHash } from "crypto";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { getBaseUrl } from "@/lib/base-url";
 
 const TOKEN_TTL_MS = 1000 * 60 * 60; // 1 hour
 const MIN_PASSWORD_LENGTH = 6;
@@ -11,8 +12,7 @@ function hashToken(token: string) {
 }
 
 function resetUrl(token: string) {
-  const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}/reset-password?token=${token}`;
+  return `${getBaseUrl()}/reset-password?token=${token}`;
 }
 
 /**

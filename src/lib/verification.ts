@@ -1,6 +1,7 @@
 import { randomBytes, createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
+import { getBaseUrl } from "@/lib/base-url";
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
 
@@ -9,8 +10,7 @@ export function hashToken(token: string) {
 }
 
 function verificationUrl(token: string) {
-  const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}/verify?token=${token}`;
+  return `${getBaseUrl()}/verify?token=${token}`;
 }
 
 /**
