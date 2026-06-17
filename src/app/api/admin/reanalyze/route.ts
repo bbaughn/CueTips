@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findYoutubeUrl } from "@/lib/youtube";
-import { submitAnalysis, getJobResult } from "@/lib/qanalyzer";
+import { submitAnalysis, getJobResult, QAnalyzerRateLimitError } from "@/lib/qanalyzer";
 import { calcHourMinuteFromKeyString } from "@/lib/hour-minute";
 
 // POST /api/admin/reanalyze - re-submit analysis for tracks that failed or errored
@@ -39,6 +39,8 @@ export async function POST(req: Request) {
 
   let queued = 0;
   let skipped = 0;
+  let rateLimited = false;
+  let retryAfterSeconds: number | undefined;
 
   for (const track of tracks) {
     try {
@@ -115,10 +117,26 @@ export async function POST(req: Request) {
         queued++;
       }
     } catch (err) {
+      if (err instanceof QAnalyzerRateLimitError) {
+        // Rate limited — mark this track retryable and stop submitting more.
+        rateLimited = true;
+        retryAfterSeconds = err.retryAfterSeconds;
+        await prisma.track.update({
+          where: { id: track.id },
+          data: { analysisStatus: "rate_limited" },
+        }).catch(() => {});
+        break;
+      }
       console.error(`Reanalyze failed for track ${track.id}:`, err);
       skipped++;
     }
   }
 
-  return NextResponse.json({ queued, skipped, total: tracks.length });
+  return NextResponse.json({
+    queued,
+    skipped,
+    total: tracks.length,
+    rateLimited,
+    retryAfterSeconds,
+  });
 }

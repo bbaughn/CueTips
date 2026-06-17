@@ -41,6 +41,21 @@ function youtubeEmbedUrl(url: string): string | null {
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 }
 
+function formatRetry(retryAfterSeconds?: number): string {
+  if (!retryAfterSeconds || retryAfterSeconds <= 0) return "in a few minutes";
+  const minutes = Math.round(retryAfterSeconds / 60);
+  if (minutes >= 1) {
+    return `in about ${minutes} minute${minutes === 1 ? "" : "s"}`;
+  }
+  return `in about ${retryAfterSeconds} seconds`;
+}
+
+function rateLimitMessage(retryAfterSeconds?: number): string {
+  return `Analysis is rate-limited right now — try analyzing again ${formatRetry(
+    retryAfterSeconds
+  )}.`;
+}
+
 export default function ReleasePage() {
   const params = useParams();
   const router = useRouter();
@@ -51,9 +66,14 @@ export default function ReleasePage() {
 
   const [analyzing, setAnalyzing] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [rateLimitMsg, setRateLimitMsg] = useState("");
 
   const hasPending = release?.tracks.some(
     (t) => t.analysisStatus === "queued" || t.analysisStatus === "running"
+  );
+
+  const hasRateLimited = release?.tracks.some(
+    (t) => t.analysisStatus === "rate_limited"
   );
 
   const hasUnanalyzed = release?.tracks.some(
@@ -66,6 +86,7 @@ export default function ReleasePage() {
   async function analyzeRelease() {
     if (!release) return;
     setAnalyzing(true);
+    setRateLimitMsg("");
     try {
       const res = await fetch("/api/admin/reanalyze", {
         method: "POST",
@@ -73,6 +94,10 @@ export default function ReleasePage() {
         body: JSON.stringify({ releaseId: release.id }),
       });
       if (res.ok) {
+        const data = await res.json();
+        if (data.rateLimited) {
+          setRateLimitMsg(rateLimitMessage(data.retryAfterSeconds));
+        }
         const refreshed = await fetch(`/api/release/${id}`);
         if (refreshed.ok) setRelease(await refreshed.json());
       }
@@ -192,6 +217,9 @@ export default function ReleasePage() {
                   {removing ? "Removing..." : "Remove from Collection"}
                 </button>
               </div>
+              {rateLimitMsg && (
+                <p className="mt-3 text-sm text-amber-400">{rateLimitMsg}</p>
+              )}
             </div>
           </div>
         </div>
@@ -202,6 +230,13 @@ export default function ReleasePage() {
         {hasPending && (
           <p className="text-xs text-amber-400 mb-3 animate-pulse">
             Analyzing tracks... refreshing automatically
+          </p>
+        )}
+        {hasRateLimited && (
+          <p className="text-xs text-amber-400 mb-3">
+            Some tracks couldn&apos;t be analyzed because Analysis is
+            rate-limited. Click &quot;Analyze Tracks&quot; to retry in a few
+            minutes.
           </p>
         )}
         {(() => {

@@ -46,6 +46,24 @@ export interface AnalysisResult {
   };
 }
 
+// Thrown when QAnalyzer responds 429. retryAfterSeconds is parsed from the
+// Retry-After header when present.
+export class QAnalyzerRateLimitError extends Error {
+  retryAfterSeconds?: number;
+  constructor(retryAfterSeconds?: number) {
+    super("QAnalyzer rate limit exceeded");
+    this.name = "QAnalyzerRateLimitError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+function parseRetryAfter(res: Response): number | undefined {
+  const raw = res.headers.get("retry-after");
+  if (!raw) return undefined;
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) ? seconds : undefined;
+}
+
 export async function submitAnalysis(
   youtubeUrl: string
 ): Promise<AnalyzeResponse> {
@@ -57,6 +75,7 @@ export async function submitAnalysis(
       source: youtubeUrl,
     }),
   });
+  if (res.status === 429) throw new QAnalyzerRateLimitError(parseRetryAfter(res));
   if (!res.ok) throw new Error(`QAnalyzer submit failed: ${res.status}`);
   return res.json();
 }

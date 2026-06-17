@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getDiscogsRelease } from "@/lib/discogs";
 import { findYoutubeUrl } from "@/lib/youtube";
-import { submitAnalysis } from "@/lib/qanalyzer";
+import { submitAnalysis, QAnalyzerRateLimitError } from "@/lib/qanalyzer";
 
 // GET /api/collection - list user's releases alphabetically
 export async function GET() {
@@ -105,6 +105,9 @@ export async function POST(req: Request) {
   });
 
   // For new imports, find YouTube URLs and submit to QAnalyzer
+  let rateLimited = false;
+  let retryAfterSeconds: number | undefined;
+
   if (isNewImport) {
     const releaseArtist = release.artist;
     const tracks = release.tracks;
@@ -136,6 +139,17 @@ export async function POST(req: Request) {
           },
         });
       } catch (err) {
+        if (err instanceof QAnalyzerRateLimitError) {
+          // Rate limited — mark this track retryable and stop submitting more
+          // so we don't keep hammering the service.
+          rateLimited = true;
+          retryAfterSeconds = err.retryAfterSeconds;
+          await prisma.track.update({
+            where: { id: track.id },
+            data: { analysisStatus: "rate_limited" },
+          }).catch(() => {});
+          break;
+        }
         console.error(`YouTube/analysis failed for track ${track.id}:`, err);
         await prisma.track.update({
           where: { id: track.id },
@@ -145,5 +159,10 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ success: true, releaseId: release.id });
+  return NextResponse.json({
+    success: true,
+    releaseId: release.id,
+    rateLimited,
+    retryAfterSeconds,
+  });
 }
