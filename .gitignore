@@ -45,6 +45,5 @@ next-env.d.ts
 # local working assets / scratch (not part of the app)
 /MISSION.md
 /big set of rave flyers/
-/logo/
+/images_working/
 /sketch.js
-/src/images/
