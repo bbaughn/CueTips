@@ -158,7 +158,7 @@ export default function ReleasePage() {
   if (!release) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <p className="text-zinc-500">Release not found</p>
+        <p className="text-zinc-500">Record not found</p>
       </div>
     );
   }

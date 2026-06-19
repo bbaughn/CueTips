@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   });
 
   if (!release) {
-    return NextResponse.json({ error: "Release not found" }, { status: 404 });
+    return NextResponse.json({ error: "Record not found" }, { status: 404 });
   }
 
   const trackIds = release.tracks.map((t) => t.id);

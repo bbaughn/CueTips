@@ -150,7 +150,7 @@ export default function CollectionGrid({ userName }: { userName: string }) {
             onClick={() => router.push("/add")}
             className="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-sm font-semibold transition"
           >
-            + Add Release
+            + Add Record
           </button>
           <button
             onClick={() => signOut()}
@@ -172,7 +172,7 @@ export default function CollectionGrid({ userName }: { userName: string }) {
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            Releases
+            Records
           </button>
           <button
             onClick={() => setTab("tracks")}
@@ -195,7 +195,7 @@ export default function CollectionGrid({ userName }: { userName: string }) {
               onClick={() => router.push("/add")}
               className="px-6 py-3 bg-amber-600 hover:bg-amber-500 rounded-lg font-semibold transition"
             >
-              Add Your First Release
+              Add Your First Record
             </button>
           </div>
         ) : tab === "releases" ? (

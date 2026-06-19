@@ -69,7 +69,7 @@ export default function AddReleasePage() {
     <div className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">Add Release</h1>
+          <h1 className="text-2xl font-bold">Add Record</h1>
           <button
             onClick={() => router.push("/")}
             className="text-zinc-400 hover:text-white transition"
@@ -177,7 +177,7 @@ export default function AddReleasePage() {
 
         {results.length === 0 && !searching && (
           <p className="text-zinc-500 text-center mt-12">
-            Search Discogs to find releases to add to your collection.
+            Search Discogs to find records to add to your collection.
           </p>
         )}
       </div>
